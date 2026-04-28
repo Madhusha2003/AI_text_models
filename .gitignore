@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data & Models (Project Specific)
+# Large CSV files or trained models often shouldn't be in Git
+# data/**/*.csv
+# models/*.pkl
+# legacy/
+
+# Logs
+*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+
+#Large Datasets
+data/movie_review/IMDB Dataset.csv
+data/movie_review/cleaned_imdb_dataset.csv
