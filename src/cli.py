@@ -10,17 +10,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import src.modules.price_predict.model as price_model
 import src.modules.movie_review.model as movie_model
 import src.modules.receipt_ai.model as receipt_model
+import src.modules.receipt_ai.model_category as receipt_category_model
 from src.modules.data_scraper.scraper import WebScraper
 
 from src.core.config import (
     PRICE_MODEL_PATH, PRICE_DATA_DIR, 
     MOVIE_MODEL_PATH, MOVIE_DATA_DIR,
-    RECEIPT_DATA_DIR
+    RECEIPT_DATA_DIR, RECEIPT_MODEL_PATH,
+    RECEIPT_CATEGORY_MODEL_PATH
 )
-from src.modules.receipt_ai.model import ReceiptClassifier # For training
-
-# Local path for receipt model in config
-RECEIPT_MODEL_PATH = os.path.join(os.path.dirname(PRICE_MODEL_PATH), 'receipt_classifier.pkl')
 
 def handle_price(args):
     map_path = os.path.join(PRICE_DATA_DIR, 'commodity_map.csv')
@@ -71,6 +69,7 @@ def handle_receipt(args):
             return
             
         df = pd.read_csv(data_path).dropna()
+        from src.modules.receipt_ai.model import ReceiptClassifier
         engine = ReceiptClassifier()
         engine.train(df['text'].tolist(), df['label'].tolist(), RECEIPT_MODEL_PATH)
     else:
@@ -79,6 +78,28 @@ def handle_receipt(args):
             print(f"\n--- Receipt Classification ---")
             print(f"Text: {args.text}")
             print(f"Label: {label}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+def handle_receipt_category(args):
+    if args.train:
+        import pandas as pd
+        data_path = os.path.join(RECEIPT_DATA_DIR, 'data_set.csv')
+        
+        if not os.path.exists(data_path):
+            print(f"Training data not found in {RECEIPT_DATA_DIR}")
+            return
+            
+        df = pd.read_csv(data_path).dropna()
+        from src.modules.receipt_ai.model_category import ReceiptItemCategorizer
+        engine = ReceiptItemCategorizer()
+        engine.train(df['Product Name'].tolist(), df['Category'].tolist(), RECEIPT_CATEGORY_MODEL_PATH)
+    else:
+        try:
+            cat = receipt_category_model.predict(args.text, RECEIPT_CATEGORY_MODEL_PATH)
+            print(f"\n--- Receipt Item Categorization ---")
+            print(f"Text: {args.text}")
+            print(f"Category: {cat}")
         except Exception as e:
             print(f"Error: {e}")
 
@@ -104,9 +125,13 @@ def main():
     movie_parser.add_argument("--train", action="store_true", help="Train the model")
 
     # Receipt AI
-    receipt_parser = subparsers.add_parser("receipt", help="Classify receipt text")
+    receipt_parser = subparsers.add_parser("receipt", help="Classify receipt text (TITLE, PRICE, etc.)")
     receipt_parser.add_argument("--text", help="Receipt text to classify")
     receipt_parser.add_argument("--train", action="store_true", help="Train the model")
+
+    receipt_cat_parser = subparsers.add_parser("receipt_category", help="Categorize receipt items (Electronics, etc.)")
+    receipt_cat_parser.add_argument("--text", help="Item text to categorize")
+    receipt_cat_parser.add_argument("--train", action="store_true", help="Train the model")
 
     # Scraper
     scraper_parser = subparsers.add_parser("scrape", help="Scrape book data")
@@ -120,6 +145,8 @@ def main():
         handle_movie(args)
     elif args.command == "receipt":
         handle_receipt(args)
+    elif args.command == "receipt_category":
+        handle_receipt_category(args)
     elif args.command == "scrape":
         handle_scrape(args)
     else:

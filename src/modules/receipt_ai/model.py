@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 class ReceiptClassifier:
-    #Handles receipt text classification.#
+    """Handles receipt text classification."""
     
     def __init__(self, model_path=None):
         self.model = None
@@ -22,7 +22,7 @@ class ReceiptClassifier:
         return self.label_map.get(prediction, 'UNKNOWN')
 
     def train(self, X, y, save_path=None):
-        #Trains a new pipeline.#
+        """Trains a new pipeline."""
         inv_label_map = {v: k for k, v in self.label_map.items()}
         y_encoded = [inv_label_map.get(label.upper(), 3) if isinstance(label, str) else label for label in y]
 
@@ -42,3 +42,7 @@ class ReceiptClassifier:
 def predict(text, model_path="receipt_classifier.pkl"):
     engine = ReceiptClassifier(model_path)
     return engine.predict(text)
+
+def train(X, y, save_path="receipt_classifier.pkl"):
+    engine = ReceiptClassifier()
+    engine.train(X, y, save_path)

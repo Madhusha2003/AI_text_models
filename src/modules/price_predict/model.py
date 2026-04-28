@@ -1,9 +1,10 @@
 import os
 import pandas as pd
 import joblib
+from sklearn.ensemble import RandomForestRegressor
 
 class PriceModel:
-    #Handles price data processing and prediction.#
+    """Handles price data processing and prediction."""
     
     def __init__(self, model_path=None, map_path=None):
         self.model = None
@@ -16,6 +17,7 @@ class PriceModel:
             self._load_map(map_path)
 
     def _load_map(self, path):
+        if not os.path.exists(path): return
         df = pd.read_csv(path)
         df['commodity'] = df['commodity'].str.lower()
         self.commodity_map = dict(zip(df['commodity'], df['commodity_id']))
@@ -38,7 +40,23 @@ class PriceModel:
         price = self.model.predict(input_df)[0]
         return price
 
+    def train(self, df, save_path=None):
+        """Trains the model."""
+        X = df[['year', 'month', 'day', 'commodity_id']]
+        y = df['price']
+        
+        self.model = RandomForestRegressor(n_estimators=100, random_state=1)
+        self.model.fit(X, y)
+        
+        if save_path:
+            joblib.dump(self.model, save_path)
+            print(f"Model saved to {save_path}")
+
 # Standard Interface
 def predict(item_name, target_date, model_path="lanka_food_model.pkl", map_path="commodity_map.csv"):
     engine = PriceModel(model_path, map_path)
     return engine.predict(item_name, target_date)
+
+def train(df, save_path="lanka_food_model.pkl"):
+    engine = PriceModel()
+    engine.train(df, save_path)

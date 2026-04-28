@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 
 class SentimentModel:
-    #Handles data processing and sentiment prediction.
+    """Handles data processing and sentiment prediction."""
     
     def __init__(self, model_path=None):
         self.model = None
@@ -36,7 +36,7 @@ class SentimentModel:
         return sentiment
 
     def train(self, X, y, save_path=None):
-        #Trains a new pipeline and optionally saves it.
+        """Trains a new pipeline and optionally saves it."""
         pipeline = Pipeline([
             ('tfidf', TfidfVectorizer(max_features=10000, stop_words='english', ngram_range=(1, 2))),
             ('clf', LinearSVC())
@@ -54,3 +54,7 @@ class SentimentModel:
 def predict(text, model_path="movie_review_model.pkl"):
     engine = SentimentModel(model_path)
     return engine.predict(text)
+
+def train(X, y, save_path="movie_review_model.pkl"):
+    engine = SentimentModel()
+    engine.train(X, y, save_path)

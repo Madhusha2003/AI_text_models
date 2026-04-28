@@ -6,7 +6,9 @@ MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 # Model Paths
 PRICE_MODEL_PATH = os.path.join(MODELS_DIR, 'lanka_food_model.pkl')
-MOVIE_MODEL_PATH = os.path.join(MODELS_DIR, 'movie_review_model.pkl') # We'll create this
+MOVIE_MODEL_PATH = os.path.join(MODELS_DIR, 'movie_review_model.pkl')
+RECEIPT_MODEL_PATH = os.path.join(MODELS_DIR, 'receipt_classifier.pkl')
+RECEIPT_CATEGORY_MODEL_PATH = os.path.join(MODELS_DIR, 'receipt_category_model.pkl')
 
 # Data Paths
 PRICE_DATA_DIR = os.path.join(DATA_DIR, 'price_predict')
