@@ -2,16 +2,15 @@ import argparse
 import sys
 import os
 from datetime import datetime
+import pandas as pd
 
-# Add src to path if needed
+# Add root to path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Simplified Imports from modules
-import src.modules.price_predict.model as price_model
-import src.modules.movie_review.model as movie_model
-import src.modules.receipt_ai.model as receipt_model
-import src.modules.receipt_ai.model_category as receipt_category_model
-from src.modules.data_scraper.scraper import WebScraper
+import src.price_predict as price_predict
+import src.movie_review as movie_review
+import src.receipt_ai as receipt_ai
+import src.data_scraper as data_scraper
 
 from src.core.config import (
     PRICE_MODEL_PATH, PRICE_DATA_DIR, 
@@ -30,7 +29,8 @@ def handle_price(args):
             print("Invalid date format. Using today.")
 
     try:
-        price = price_model.predict(args.item, target_date, PRICE_MODEL_PATH, map_path)
+        model = price_predict.PriceModel(PRICE_MODEL_PATH, map_path)
+        price = model.predict(args.item, target_date)
         print(f"\n--- Price Prediction ---")
         print(f"Item: {args.item}")
         print(f"Date: {target_date.strftime('%Y-%m-%d')}")
@@ -40,17 +40,16 @@ def handle_price(args):
 
 def handle_movie(args):
     if args.train:
-        import pandas as pd
         data_path = os.path.join(MOVIE_DATA_DIR, 'cleaned_imdb_dataset.csv')
         if not os.path.exists(data_path):
             print(f"Training data not found at {data_path}")
             return
         df = pd.read_csv(data_path).dropna()
-        engine = movie_model.SentimentModel()
-        engine.train(df['review'].tolist(), df['sentiment'].tolist(), MOVIE_MODEL_PATH)
+        movie_review.SentimentModel.train(df['review'].tolist(), df['sentiment'].tolist(), MOVIE_MODEL_PATH)
     else:
         try:
-            sentiment = movie_model.predict(args.text, MOVIE_MODEL_PATH)
+            model = movie_review.SentimentModel(MOVIE_MODEL_PATH)
+            sentiment = model.predict(args.text)
             print(f"\n--- Sentiment Analysis ---")
             print(f"Review: {args.text[:50]}...")
             print(f"Sentiment: {sentiment}")
@@ -59,7 +58,6 @@ def handle_movie(args):
 
 def handle_receipt(args):
     if args.train:
-        import pandas as pd
         data_path = os.path.join(RECEIPT_DATA_DIR, 'synthetic_receipts.csv')
         if not os.path.exists(data_path):
             data_path = os.path.join(RECEIPT_DATA_DIR, 'data03.csv')
@@ -69,12 +67,11 @@ def handle_receipt(args):
             return
             
         df = pd.read_csv(data_path).dropna()
-        from src.modules.receipt_ai.model import ReceiptClassifier
-        engine = ReceiptClassifier()
-        engine.train(df['text'].tolist(), df['label'].tolist(), RECEIPT_MODEL_PATH)
+        receipt_ai.ReceiptClassifier.train(df['text'].tolist(), df['label'].tolist(), RECEIPT_MODEL_PATH)
     else:
         try:
-            label = receipt_model.predict(args.text, RECEIPT_MODEL_PATH)
+            model = receipt_ai.ReceiptClassifier(RECEIPT_MODEL_PATH)
+            label = model.predict(args.text)
             print(f"\n--- Receipt Classification ---")
             print(f"Text: {args.text}")
             print(f"Label: {label}")
@@ -83,20 +80,20 @@ def handle_receipt(args):
 
 def handle_receipt_category(args):
     if args.train:
-        import pandas as pd
-        data_path = os.path.join(RECEIPT_DATA_DIR, 'data_set.csv')
-        
+        data_path = os.path.join(RECEIPT_DATA_DIR, 'synthetic_products_full.csv')
+        if not os.path.exists(data_path):
+            data_path = os.path.join(RECEIPT_DATA_DIR, 'data_set.csv')
+            
         if not os.path.exists(data_path):
             print(f"Training data not found in {RECEIPT_DATA_DIR}")
             return
             
         df = pd.read_csv(data_path).dropna()
-        from src.modules.receipt_ai.model_category import ReceiptItemCategorizer
-        engine = ReceiptItemCategorizer()
-        engine.train(df['Product Name'].tolist(), df['Category'].tolist(), RECEIPT_CATEGORY_MODEL_PATH)
+        receipt_ai.ReceiptItemCategorizer.train(df['Product Name'].tolist(), df['Category'].tolist(), RECEIPT_CATEGORY_MODEL_PATH)
     else:
         try:
-            cat = receipt_category_model.predict(args.text, RECEIPT_CATEGORY_MODEL_PATH)
+            model = receipt_ai.ReceiptItemCategorizer(RECEIPT_CATEGORY_MODEL_PATH)
+            cat = model.predict(args.text)
             print(f"\n--- Receipt Item Categorization ---")
             print(f"Text: {args.text}")
             print(f"Category: {cat}")
@@ -104,7 +101,7 @@ def handle_receipt_category(args):
             print(f"Error: {e}")
 
 def handle_scrape(args):
-    scraper = WebScraper()
+    scraper = data_scraper.WebScraper()
     print(f"Scraping {args.pages} pages...")
     data = scraper.scrape_books(num_pages=args.pages)
     path = scraper.save_raw(data)
